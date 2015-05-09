@@ -4,18 +4,19 @@ import android.net.Uri;
 import android.util.Log;
 
 import org.apache.http.client.HttpResponseException;
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import com.google.gson.Gson;
+
 
 /**
  * Created by xyang on 5/8/15.
@@ -58,9 +59,10 @@ public class FlickrFetchr {
                     .appendQueryParameter("extras", "url_s")
                     .build().toString();
             String jsonString = getUrl(url);
+
             Log.i("Eric", "Received Json: " + jsonString);
-            JSONObject jsonBody = new JSONObject(jsonString);
-            parseItems(items, jsonBody);
+            Map<String, Object> gsonBody = new Gson().fromJson(jsonString, Map.class);
+            parseItems(items, gsonBody);
         } catch (IOException ioe) {
             Log.e("Eric", "failed to fetch items: ", ioe);
         } catch (JSONException je) {
@@ -69,17 +71,18 @@ public class FlickrFetchr {
         return items;
     }
 
-    private void parseItems(List<GalleryItem> items, JSONObject jsonBody)
+    private void parseItems(List<GalleryItem> items, Map<String, Object> gsonBody)
             throws IOException, JSONException{
-        JSONObject photos = jsonBody.getJSONObject("photos");
-        JSONArray photoJsonArray = photos.getJSONArray("photo");
+        List<Object> photoList =
+                (ArrayList)(
+                  ((Map) gsonBody.get("photos")).get("photo"));
 
-        for(int i= 0; i< photoJsonArray.length(); i++) {
-            JSONObject photoJsonObject = photoJsonArray.getJSONObject(i);
+        for(int i =0; i < photoList.size(); i++){
+            Map<String,String> map = (Map<String,String>)photoList.get(i);
             GalleryItem item = new GalleryItem();
-            item.setId(photoJsonObject.getString("id"));
-            item.setCaption(photoJsonObject.getString("title"));
-            item.setUrl(photoJsonObject.getString("url_s"));
+            item.setId(map.get("id"));;
+            item.setCaption(map.get("title"));
+            item.setUrl(map.get("url_s"));
             items.add(item);
         }
     }
