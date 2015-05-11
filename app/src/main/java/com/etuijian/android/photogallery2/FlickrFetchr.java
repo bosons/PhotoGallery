@@ -23,6 +23,7 @@ import com.google.gson.Gson;
  */
 public class FlickrFetchr {
     private static final String API_KEY = "b0a574d9e231935b3dd06f6186a10ab7";
+    private static final int maxPageNumber = 10;
     public byte[] getUrlBytes(String urlSpec) throws IOException {
         URL url = new URL(urlSpec);
         HttpURLConnection connection = (HttpURLConnection)url.openConnection();
@@ -47,8 +48,9 @@ public class FlickrFetchr {
     public String getUrl(String urlSpec) throws IOException {
         return new String(getUrlBytes(urlSpec));
     }
-    public List<GalleryItem> fetchItem() {
+    public List<GalleryItem> fetchItem(int currentPage) {
         List<GalleryItem> items = new ArrayList<GalleryItem>();
+        if(currentPage > maxPageNumber) {return items; }
         try {
             String url = Uri.parse("https://api.flickr.com/services/rest/")
                     .buildUpon()
@@ -57,6 +59,7 @@ public class FlickrFetchr {
                     .appendQueryParameter("format", "json")
                     .appendQueryParameter("nojsoncallback", "1")
                     .appendQueryParameter("extras", "url_s")
+                    .appendQueryParameter("page",Integer.toString(currentPage))
                     .build().toString();
             String jsonString = getUrl(url);
 
@@ -77,6 +80,7 @@ public class FlickrFetchr {
                 (ArrayList)(
                   ((Map) gsonBody.get("photos")).get("photo"));
 
+        Log.i("Eric", "Photo list size" + photoList.size());
         for(int i =0; i < photoList.size(); i++){
             Map<String,String> map = (Map<String,String>)photoList.get(i);
             GalleryItem item = new GalleryItem();
